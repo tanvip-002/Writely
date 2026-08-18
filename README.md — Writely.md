@@ -8,7 +8,31 @@ It combines the social features of a community platform with the focused reading
 
 ---
 
-## Features
+## Local setup and AI configuration
+
+### Environment variables
+
+Copy `.env.example` to `.env` and fill in the relevant keys for your environment:
+
+```bash
+cp .env.example .env
+```
+
+The app supports the following AI options:
+
+- `OPENAI_API_KEY` for OpenAI GPT
+- `GEMINI_API_KEY` for Google Gemini
+- `AI_API_KEY` as a shared fallback used by either provider
+
+If no key is configured, Writely automatically uses the built-in local AI engine so the app continues to work in local development.
+
+When 3000 is already in use, run the app on a different port:
+
+```bash
+PORT=3001 npm run dev
+```
+
+### Features
 
 ### Authentication
 

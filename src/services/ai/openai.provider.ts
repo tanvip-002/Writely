@@ -5,7 +5,7 @@ export class OpenAIProvider implements IAIProvider {
   name = "OpenAI GPT";
 
   private getApiKey(): string | undefined {
-    return process.env.OPENAI_API_KEY;
+    return process.env.OPENAI_API_KEY || process.env.AI_API_KEY;
   }
 
   isAvailable(): boolean {

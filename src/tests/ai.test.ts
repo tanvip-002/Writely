@@ -1,11 +1,48 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect } from "vitest";
+import { AIService } from "@/services/ai.service";
+import { GeminiProvider } from "@/services/ai/gemini.provider";
 import { LocalIntelligentProvider } from "@/services/ai/local-mock.provider";
+import { OpenAIProvider } from "@/services/ai/openai.provider";
 
 describe("AI Writing Studio Providers & Craft Tools", () => {
   const provider = new LocalIntelligentProvider();
+  const originalEnv = { ...process.env };
+
+  afterEach(() => {
+    for (const key of Object.keys(process.env)) {
+      delete process.env[key];
+    }
+    Object.assign(process.env, originalEnv);
+  });
 
   it("is always available as reliable local engine", () => {
     expect(provider.isAvailable()).toBe(true);
+  });
+
+  it("prefers configured OpenAI provider when available", () => {
+    process.env.OPENAI_API_KEY = "test-openai-key";
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.AI_API_KEY;
+
+    expect(new OpenAIProvider().isAvailable()).toBe(true);
+    expect(AIService.getActiveProvider()).toBeInstanceOf(OpenAIProvider);
+  });
+
+  it("falls back to Gemini when OpenAI is absent", () => {
+    delete process.env.OPENAI_API_KEY;
+    process.env.GEMINI_API_KEY = "test-gemini-key";
+    delete process.env.AI_API_KEY;
+
+    expect(new GeminiProvider().isAvailable()).toBe(true);
+    expect(AIService.getActiveProvider()).toBeInstanceOf(GeminiProvider);
+  });
+
+  it("falls back to the local provider when no external API keys are configured", () => {
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.AI_API_KEY;
+
+    expect(AIService.getActiveProvider()).toBeInstanceOf(LocalIntelligentProvider);
   });
 
   it("improves writing clarity and vocabulary", async () => {

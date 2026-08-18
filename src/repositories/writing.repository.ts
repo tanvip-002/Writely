@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
-import { WritingType, Visibility, WritingStatus, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 export class WritingRepository {
   static async findById(id: string) {
@@ -63,9 +63,9 @@ export class WritingRepository {
     slug: string;
     content: string;
     excerpt?: string | null;
-    writingType: WritingType;
-    visibility: Visibility;
-    status: WritingStatus;
+    writingType: string;
+    visibility: string;
+    status: string;
     coverImage?: string | null;
     wordCount: number;
     readingTime: number;
@@ -110,9 +110,9 @@ export class WritingRepository {
       title?: string;
       content?: string;
       excerpt?: string | null;
-      writingType?: WritingType;
-      visibility?: Visibility;
-      status?: WritingStatus;
+      writingType?: string;
+      visibility?: string;
+      status?: string;
       coverImage?: string | null;
       wordCount?: number;
       readingTime?: number;
@@ -260,9 +260,9 @@ export class WritingRepository {
   }: {
     authorId: string;
     currentUserId?: string | null;
-    status?: WritingStatus;
-    visibility?: Visibility;
-    writingType?: WritingType;
+    status?: string;
+    visibility?: string;
+    writingType?: string;
     page?: number;
     limit?: number;
   }) {
@@ -334,7 +334,7 @@ export class WritingRepository {
     limit = 12,
   }: {
     query?: string;
-    writingType?: WritingType;
+    writingType?: string;
     genre?: string;
     tag?: string;
     author?: string;
@@ -350,12 +350,12 @@ export class WritingRepository {
     if (query && query.trim()) {
       const q = query.trim();
       where.OR = [
-        { title: { contains: q, mode: "insensitive" } },
-        { excerpt: { contains: q, mode: "insensitive" } },
-        { content: { contains: q, mode: "insensitive" } },
-        { author: { username: { contains: q, mode: "insensitive" } } },
-        { author: { displayName: { contains: q, mode: "insensitive" } } },
-        { tags: { some: { tag: { name: { contains: q, mode: "insensitive" } } } } },
+        { title: { contains: q } },
+                { excerpt: { contains: q } },
+                { content: { contains: q } },
+                { author: { username: { contains: q } } },
+                { author: { displayName: { contains: q } } },
+                { tags: { some: { tag: { name: { contains: q } } } } },
       ];
     }
 

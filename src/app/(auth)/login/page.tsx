@@ -1,23 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { Feather, ArrowRight, Lock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useCurrentUser();
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [authLoading, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
+    setIsSubmitting(true);
 
     try {
       const res = await fetch("/api/auth/login", {
@@ -36,7 +44,7 @@ export default function LoginPage() {
     } catch (err: unknown) {
       setError((err as Error).message);
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -114,10 +122,10 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              disabled={loading || !emailOrUsername || !password}
+              disabled={isSubmitting || !emailOrUsername || !password}
               className="w-full h-10 font-semibold gap-2 shadow-xs"
             >
-              <span>{loading ? "Signing in..." : "Sign In"}</span>
+              <span>{isSubmitting ? "Signing in..." : "Sign In"}</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           </form>

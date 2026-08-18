@@ -12,7 +12,7 @@ export class AIService {
     new LocalIntelligentProvider(),
   ];
 
-  private static getActiveProvider(): IAIProvider {
+  static getActiveProvider(): IAIProvider {
     for (const provider of this.providers) {
       if (provider.isAvailable()) {
         return provider;
@@ -24,6 +24,10 @@ export class AIService {
   static async checkAndIncrementUsage(userId: string, dailyLimit = 30): Promise<void> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
+    // If the user does not exist (e.g., guest/demo usage), skip usage tracking to avoid FK errors
+    const existingUser = await prisma.user.findUnique({ where: { id: userId } });
+    if (!existingUser) return;
 
     const usage = await prisma.aIUsage.findUnique({
       where: {
@@ -87,14 +91,17 @@ export class AIService {
     // 2. Select Provider
     const provider = this.getActiveProvider();
 
-    // 3. Log request
-    await prisma.aIRequest.create({
-      data: {
-        userId,
-        tool: request.tool,
-        inputSize: request.text.length,
-      },
-    });
+    // 3. Log request (only for registered users)
+    const existingUser = await prisma.user.findUnique({ where: { id: userId } });
+    if (existingUser) {
+      await prisma.aIRequest.create({
+        data: {
+          userId,
+          tool: request.tool,
+          inputSize: request.text.length,
+        },
+      });
+    }
 
     // 4. Execute
     const response = await provider.execute(request);

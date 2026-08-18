@@ -1,25 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { Feather, ArrowRight, Lock, User, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useCurrentUser();
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [authLoading, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
+    setIsSubmitting(true);
 
     try {
       const res = await fetch("/api/auth/register", {
@@ -38,7 +46,7 @@ export default function RegisterPage() {
     } catch (err: unknown) {
       setError((err as Error).message);
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -144,10 +152,10 @@ export default function RegisterPage() {
 
             <Button
               type="submit"
-              disabled={loading || !username || !displayName || !email || password.length < 8}
+              disabled={isSubmitting || !username || !displayName || !email || password.length < 8}
               className="w-full h-10 font-semibold gap-2 shadow-xs mt-2"
             >
-              <span>{loading ? "Creating Account..." : "Create Account"}</span>
+              <span>{isSubmitting ? "Creating Account..." : "Create Account"}</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           </form>

@@ -7,7 +7,7 @@ import { formatRelativeTime } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuHeader,
+  DropdownMenuLabel,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";

@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
@@ -56,6 +57,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@types/bcryptjs": "^2.4.6",

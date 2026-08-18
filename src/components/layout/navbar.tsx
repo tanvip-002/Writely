@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Feather, Search, Sparkles, PenTool, User, LogOut, Settings } from "lucide-react";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { SessionUser } from "@/types";
 import { NotificationBell } from "./notification-bell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,10 +19,12 @@ import {
 import { Button } from "@/components/ui/button";
 
 interface NavbarProps {
-  user: SessionUser | null;
+  user?: SessionUser | null;
 }
 
-export function Navbar({ user }: NavbarProps) {
+export function Navbar({ user: serverUser }: NavbarProps) {
+  const { user: clientUser, loading } = useCurrentUser();
+  const user = serverUser === undefined ? clientUser : serverUser;
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -88,9 +91,9 @@ export function Navbar({ user }: NavbarProps) {
           </Button>
         </Link>
 
-        {user && <NotificationBell />}
+        {!loading && user && <NotificationBell />}
 
-        {user ? (
+                {!loading && user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="rounded-full focus:outline-none focus:ring-2 focus:ring-primary/40 ml-1">
@@ -135,16 +138,25 @@ export function Navbar({ user }: NavbarProps) {
           </DropdownMenu>
         ) : (
           <div className="flex items-center gap-2">
-            <Link href="/login">
-              <Button variant="ghost" size="sm" className="text-xs">
-                Log In
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button size="sm" className="text-xs">
-                Sign Up
-              </Button>
-            </Link>
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-muted/50 animate-pulse" />
+                <div className="h-4 w-20 bg-muted/50 rounded animate-pulse" />
+              </div>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" size="sm" className="text-xs">
+                    Log In
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button size="sm" className="text-xs">
+                    Sign Up
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         )}
       </div>

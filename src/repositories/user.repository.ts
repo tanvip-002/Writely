@@ -70,7 +70,7 @@ export class UserRepository {
       avatarUrl?: string | null;
       location?: string | null;
       website?: string | null;
-      genres?: string[];
+      genres?: string | undefined;
       writerType?: string | null;
     }
   ) {
@@ -91,9 +91,9 @@ export class UserRepository {
     return prisma.user.findMany({
       where: {
         OR: [
-          { username: { contains: query, mode: "insensitive" } },
-          { displayName: { contains: query, mode: "insensitive" } },
-          { bio: { contains: query, mode: "insensitive" } },
+          { username: { contains: query } },
+          { displayName: { contains: query } },
+          { bio: { contains: query } },
         ],
       },
       select: {
