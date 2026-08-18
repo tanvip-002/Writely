@@ -1,0 +1,218 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  username      String    @unique
+  email         String    @unique
+  passwordHash  String
+  displayName   String
+  bio           String?
+  avatarUrl     String?
+  location      String?
+  website       String?
+  genres        String?   @default("")
+  writerType    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  writings      Writing[]
+  favourites    Favourite[]
+  
+  followers     Follow[]  @relation("UserFollowers")
+  following     Follow[]  @relation("UserFollowing")
+
+  sentRequests     MessageRequest[] @relation("SentRequests")
+  receivedRequests MessageRequest[] @relation("ReceivedRequests")
+  
+  conversations    ConversationParticipant[]
+  sentMessages     Message[]
+  
+  notifications    Notification[] @relation("UserNotifications")
+  triggeredNotes   Notification[] @relation("TriggeredNotifications")
+  
+  aiUsages         AIUsage[]
+  aiRequests       AIRequest[]
+
+  @@index([username])
+  @@index([email])
+}
+
+model Writing {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  content     String
+  excerpt     String?
+  writingType String    @default("SHORT_STORY")
+  visibility  String    @default("PUBLIC")
+  status      String    @default("PUBLISHED")
+  coverImage  String?
+  wordCount   Int       @default(0)
+  readingTime Int       @default(1)
+  
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  genreId     String?
+  genre       Genre?    @relation(fields: [genreId], references: [id], onDelete: SetNull)
+  
+  tags        WritingTag[]
+  favourites  Favourite[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+
+  @@index([authorId])
+  @@index([visibility, status, publishedAt])
+  @@index([writingType])
+  @@index([genreId])
+  @@index([slug])
+}
+
+model Genre {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  writings Writing[]
+}
+
+model Tag {
+  id       String       @id @default(cuid())
+  name     String       @unique
+  writings WritingTag[]
+  
+  @@index([name])
+}
+
+model WritingTag {
+  writingId String
+  tagId     String
+  writing   Writing @relation(fields: [writingId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([writingId, tagId])
+  @@index([tagId])
+  @@index([writingId])
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  follower    User     @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@id([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model Favourite {
+  userId    String
+  writingId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  writing   Writing  @relation(fields: [writingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, writingId])
+  @@index([userId])
+  @@index([writingId])
+}
+
+model MessageRequest {
+  id           String        @id @default(cuid())
+  senderId     String
+  receiverId   String
+  introNote    String?
+  status       String        @default("PENDING")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  sender       User          @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver     User          @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  conversation Conversation?
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId, status])
+}
+
+model Conversation {
+  id               String                    @id @default(cuid())
+  requestId        String?                   @unique
+  request          MessageRequest?           @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+
+  participants     ConversationParticipant[]
+  messages         Message[]
+
+  @@index([updatedAt])
+}
+
+model ConversationParticipant {
+  conversationId String
+  userId         String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadAt     DateTime?
+
+  @@id([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String
+  createdAt      DateTime     @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  actorId     String?
+  type        String           @default("SYSTEM")
+  referenceId String?
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+
+  user        User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  actor       User?            @relation("TriggeredNotifications", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([userId, read, createdAt])
+}
+
+model AIUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime @default(now())
+  count     Int      @default(0)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+}
+
+model AIRequest {
+  id        String   @id @default(cuid())
+  userId    String
+  tool      String
+  inputSize Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
